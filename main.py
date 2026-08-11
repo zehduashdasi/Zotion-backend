@@ -5,6 +5,9 @@ import fastapi.middleware.cors
 from pydantic import BaseModel
 import jwt
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 secretkey = os.getenv("secretkey")
 
@@ -27,7 +30,7 @@ app = fastapi.FastAPI()
 
 app.add_middleware(
     fastapi.middleware.cors.CORSMiddleware,
-    allow_origin = ["*"],
+    allow_origins = ["*"],
     allow_credentials = True,
     allow_methods = ["*"],
     allow_headers = ["*"]
@@ -49,13 +52,15 @@ def login(cred: Login):
         cursor.execute("SELECT id,username FROM users WHERE username = ? AND password = ?",(cred.username, cred.password))
         result = cursor.fetchone()
         if result:
-            return {"token":encode_jwt({"id":result[0],"username":result[1]})}
+            return {"token":encode_jwt({"id":result[0],"username":result[1]}),"id":result[0]}
         else:
             raise fastapi.HTTPException(401,"user not found")
+    except fastapi.HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         print(e)
-        raise fastapi.HTTPException(500,e)
+        raise fastapi.HTTPException(status_code=500,detail=str(e))
     finally:
         conn.close()
 
@@ -67,12 +72,18 @@ def register(cred: Register):
 
         cursor.execute("SELECT * FROM users WHERE username=?",(cred.username,))
         if cursor.fetchone():
-            raise fastapi.HTTPException(401, "username already exists")
+            print("username already exists")
+            raise fastapi.HTTPException(status_code = 401, detail = "username already exists")
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",(cred.username, cred.password))
         conn.commit()
+        cursor.execute("SELECT id,username FROM users WHERE username = ?",(cred.username,))
+        result = cursor.fetchone()
+        return {"token": encode_jwt({"id":result[0], "username":result[1]}),"id":result[0]}
+    except fastapi.HTTPException:
+        raise 
     except Exception as e:
         conn.rollback()
         print(e)
-        raise fastapi.HTTPException(500,e)
+        raise fastapi.HTTPException(status_code=500,detail=str(e))
     finally:
         conn.close()
