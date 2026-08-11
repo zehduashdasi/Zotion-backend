@@ -44,6 +44,21 @@ class Register(BaseModel):
     username: str
     password: str
 
+class ToDo(BaseModel):
+    title: str
+    content: str
+    token: str
+
+class ToDoEdit(BaseModel):
+    id: int
+    title: str
+    content: str
+    token: str
+
+class ToDoDelete(BaseModel):
+    id: int
+    token: str
+
 @app.post("/login/")
 def login(cred: Login):
     try:
@@ -85,5 +100,99 @@ def register(cred: Register):
         conn.rollback()
         print(e)
         raise fastapi.HTTPException(status_code=500,detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/todo/{user_id}/")
+def get_todos(user_id: int, token: str):
+    try:
+        conn = sq.connect("database.db")
+        cursor = conn.cursor()
+
+        token_user_id = decode_jwt(token)["id"]
+
+        if not token_user_id == user_id:
+            raise fastapi.HTTPException(status_code=401, detail="not authorized")
+
+        cursor.execute("SELECT id, title, content FROM todo WHERE user = ?",(user_id,))
+        return cursor.fetchall()
+    except fastapi.HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(e)
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/add_todo/")
+def add_todo(todo: ToDo):
+    try:
+        conn = sq.connect("database.db")
+        cursor = conn.cursor()
+
+        token_user_id = decode_jwt(todo.token)['id']
+        if not token_user_id == todo.user_id:
+            raise fastapi.HTTPException(status_code=401, detail="not authorized")
+
+        cursor.execute("INSERT INTO todo (user, title, content) VALUES (?, ?, ?)",(todo.user_id, todo.title, todo.content))
+        conn.commit()
+        return {"detail":"done"}
+    except fastapi.HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(e)
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/edit_todo/")
+def edit_todo(todo: ToDoEdit):
+    try:
+        conn = sq.connect("database.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT user FROM todo WHERE id = ?",(todo.id,))
+        token_user_id = decode_jwt(todo.token)['id']
+        user_id = cursor.fetchone()
+        if not user_id:
+            raise fastapi.HTTPException(status_code=404, detail="todo list does not exist")
+        if not token_user_id == user_id[0]:
+            raise fastapi.HTTPException(status_code=401, detail="not authorized")
+
+        cursor.execute("UPDATE todo SET title=?, content=? WHERE id=?",(todo.title,todo.content,todo.id))
+        conn.commit()
+    except fastapi.HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(e)
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/delete_todo/")
+def delete_todo(todo: ToDoDelete):
+    try:
+        conn = sq.connect("database.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT user FROM todo WHERE id = ?",(todo.id,))
+        token_user_id = decode_jwt(todo.token)['id']
+        user_id = cursor.fetchone()
+        if not user_id:
+            raise fastapi.HTTPException(status_code=404, detail="todo list does not exist")
+        if not token_user_id == user_id[0]:
+            raise fastapi.HTTPException(status_code=401, detail="not authorized")
+        
+        cursor.execute("DELETE FROM todo WHERE id=?",(todo.id,))
+        conn.commit()
+    except fastapi.HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(e)
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
