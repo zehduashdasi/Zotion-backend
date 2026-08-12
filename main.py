@@ -107,13 +107,14 @@ def register(cred: Register):
 def get_todos(user_id: int, token: str):
     try:
         conn = sq.connect("database.db")
+        conn.row_factory = sq.Row
         cursor = conn.cursor()
 
         token_user_id = decode_jwt(token)["id"]
 
         if not token_user_id == user_id:
             raise fastapi.HTTPException(status_code=401, detail="not authorized")
-
+        
         cursor.execute("SELECT id, title, content FROM todo WHERE user = ?",(user_id,))
         return cursor.fetchall()
     except fastapi.HTTPException:
@@ -132,10 +133,8 @@ def add_todo(todo: ToDo):
         cursor = conn.cursor()
 
         token_user_id = decode_jwt(todo.token)['id']
-        if not token_user_id == todo.user_id:
-            raise fastapi.HTTPException(status_code=401, detail="not authorized")
 
-        cursor.execute("INSERT INTO todo (user, title, content) VALUES (?, ?, ?)",(todo.user_id, todo.title, todo.content))
+        cursor.execute("INSERT INTO todo (user, title, content) VALUES (?, ?, ?)",(token_user_id, todo.title, todo.content))
         conn.commit()
         return {"detail":"done"}
     except fastapi.HTTPException:

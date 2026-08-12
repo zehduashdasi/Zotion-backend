@@ -1,0 +1,117 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+}
+
+.side-bar {
+    width: 20%;
+    border-right: 3px solid lightgray;
+    background-color: dimgray;
+}
+
+.nav-links {
+    padding-top: 20px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+.nav-link button{
+    background-color: rgb(130,130,130);
+    border: none;
+    border-radius: 10px;
+    font-size: 24px;
+    width: 100%;
+    padding: 10px;
+    transform: translateY(0%);
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+.nav-link button:hover{
+    background-color: rgb(140,140,140);
+    transform: translateY(-5%);
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+.container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.todo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.todo-title {
+    border: none;
+    font-size: 36px;
+    padding: 25px;
+    background: transparent;
+    transform: translate(-5%,0);
+    transition: transform 0.3s;
+    border-left: 3px solid black;
+}
+
+.todo-title:focus {
+    border: none;
+    outline: none;
+    transform: translate(-1%,5%);
+    padding-left: 23px;
+    transition: transform 0.3s;
+    border-left: 5px solid gray;
+    max-width: 70vw;
+    
+}
+
+.todo-title:hover {
+    transform: translate(-1%,5%);
+    transition: transform 0.3s;
+}
+
+.todo-content {
+    border: none;
+    font-size: 16px;
+    padding: 25px;
+    background: transparent;
+    transform: translate(0,0);
+    transition: transform 0.3s;
+    border-left: 1px solid black;
+    resize: none;
+    width: 80%;
+}
+
+.todo-content:focus {
+    border: none;
+    outline: none;
+    transform: translate(1%,5%);
+    transition: transform 0.3s;
+    border-left: 3px solid grey;
+}
+
+.todo-content:hover {
+    transform: translate(1%,5%);
+    transition: transform 0.3s;
+}
+
+.save-btn{
+    border: none;
+    padding: 10px;
+    font-size: 22px;
+    border-radius: 10px;
+}

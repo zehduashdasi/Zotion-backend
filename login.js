@@ -15,10 +15,10 @@ async function login(){
                 password: password
             })
         });
-        if (!request.status == 200){
-            throw new Error(`Response status: ${response.status}`);
-        }
         let data = await request.json();
+        if (!request.ok){
+            throw new Error(data.detail);
+        }
         let token = data.token;
         let id = data.id;
         localStorage.setItem("jwtToken",token);
